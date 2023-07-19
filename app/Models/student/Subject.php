@@ -1,0 +1,57 @@
+<?php
+
+namespace App\Models\student;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Request;
+use Auth;
+class Subject  extends Model
+{
+    use HasFactory;
+    protected $table='subject';
+    static public function getSingle($id){
+        return self::find($id);
+     }
+    static public function getRecord(){
+        $return = Subject::select('subject.*','users.name as created_by_name')
+                ->join('users','users.id','subject.created_by')
+                ->where('users.class_id','=',Auth::user()->class_id);
+            if(!empty(Request::get('name')))
+            {
+                $return =$return->where('subject.name','like',
+                '%'.Request::get('name').'%'); 
+            } 
+            if(!empty(Request::get('type')))
+            {
+                $return =$return->where('subject.type','=',
+                Request::get('type')); 
+            } 
+           
+            if(!empty(Request::get('date'))){
+                $return=$return->whereDate('subject.created_at','=',Request::get('date'));  
+            } 
+            $return =$return->where('subject.is_deleted','=',0)
+                ->orderBy('subject.id','desc')
+                ->paginate(10);
+        return  $return;
+    }
+    static public function getSubject(){
+        $return = Subject::select('subject.*')
+        ->join('users','users.id','subject.created_by');
+       
+        if(!empty(Request::get('department_id')))
+        {
+            $return =$return->where('subject.department_id','=',Request::get('department_id')); 
+        }
+        $return =$return->where('subject.is_deleted','=',0)
+        ->where('subject.term','=',Auth::user()->term)
+        ->where('subject.status','=',0)
+        
+        ->orderBy('subject.name','asc')
+        ->get();
+         return  $return;   
+    }
+    
+}
+
